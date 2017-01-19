@@ -24,11 +24,16 @@ def server(log_buffer=sys.stderr):
                         break
 
                 try:
-                    parse_request(request)
+                    uri = parse_request(request)
                 except NotImplementedError:
                     response = response_method_not_allowed()
                 else:
-                    response = response_ok()
+                    try:
+                        content, mime_type = resolve_uri(url)
+                    except NameError:
+                        response = response_not_found()
+                    else:
+                        response = response_ok()
                 print('sending response', file=log_buffer)
                 conn.sendall(response)
             finally:
@@ -53,6 +58,7 @@ def parse_request(request):
     if method != 'GET':
         raise NotImplementedError('We only accept GET')
     print('request is okay', file=sys.stderr)
+    return uri
 
 def response_method_not_allowed():
     ''' returns a 405 Method Not Allowed response '''
